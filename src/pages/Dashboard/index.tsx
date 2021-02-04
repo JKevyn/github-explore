@@ -1,31 +1,57 @@
-import React from 'react';
-import { FiChevronRight } from 'react-icons/fi'
+import React, { useState, FormEvent } from 'react';
+import { FiChevronRight } from 'react-icons/fi';
+import api from '../../services/api';
 
 import logoImg from '../../assets/logo.svg';
 
 import { Title, Form, Repositories } from './styles';
 
+interface Repository {
+    full_name: string,
+    description: string,
+    owner: {
+        login: string;
+        avatar_url: string;
+    }
+}
+
 const Dashboard: React.FC = () => {
+    const [newRepo, setNewRepo] = useState('');
+    const [repositories, setRepositories] = useState<Repository[]>([]);
+
+    async function handleAddRepository(event: FormEvent<HTMLFormElement>){
+        event.preventDefault();
+        
+        const response = await api.get(`repos/${newRepo}`);
+
+        const repository = response.data;
+        
+        setRepositories([...repositories, repository]);
+        setNewRepo('');
+    }
+
     return (
         <>
             <img src={logoImg} alt="github explore"/>
             <Title>Explore repositórios no Github</Title>
 
-            <Form action="">
-                <input placeholder="Digite o nome do repositório"/>
+            <Form onSubmit={handleAddRepository}>
+                <input value={newRepo} onChange={(e): any => setNewRepo(e.target.value)} placeholder="Digite o nome do repositório"/>
                 <button type="submit">Pesquisar</button>
             </Form>
 
             <Repositories>
-                <a href="/">
-                    <img src="https://avatars.githubusercontent.com/u/51202335?s=460&u=2cfda203288ac6a430e06ee4e2e2ce5bb18d20ce&v=4" alt="Kevyn Gonçalves"/>
+                {repositories.map(repository => {
+                    <a key={repository.full_name} href="/">
+                    <img src={repository.owner.avatar_url} alt={repository.owner.login}/>
                     <div>
-                        <strong>rocketseat/unform</strong>
-                        <p>Easy peasy highly scalable ReactJS & React Native forms!</p>
+                        <strong>{repository.full_name}</strong>
+                        <p>{repository.description}</p>
                     </div>
 
                     <FiChevronRight size={20}/>
-                </a>
+                    </a>
+                })}
             </Repositories>
         </>
     );
